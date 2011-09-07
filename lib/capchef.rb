@@ -1,3 +1,8 @@
+require 'rubygems'
+require 'erb'
+require 'yaml'
+require 'json'
+
 module Capchef
   extend self
 
@@ -39,12 +44,11 @@ module Capchef
   end
 
   def surun_script(cap, script, options={})
-    # TBD - We can change this to use /tmp as its no longer noexec
     raise "No such file: #{script}" unless File.exist?(script)
     basename = File.basename(script)
-    tmpdir = "/tmp/#{basename}.#$$"
-    remote_script = "#{tmpdir}/#{basename}"
-    cap.run "mkdir #{tmpdir}", options
+    script_dir = "#{tmpdir}/#{basename}.#$$"
+    remote_script = "#{script_dir}/#{basename}"
+    cap.run "mkdir #{script_dir}", options
     cap.upload script, remote_script, options
     cap.run "chmod 0755 #{remote_script}", options
     if block_given?
@@ -52,6 +56,25 @@ module Capchef
     else
       surun cap, remote_script, options
     end
-    cap.run "rm -rf #{tmpdir}", options
+    cap.run "rm -rf #{script_dir}", options
+  end
+
+  def nodes_config
+    # The config file might want access to information that is contained within it (all_nodes for instance).
+    # If so, make sure the 2nd pass doesn't try to acquire the same info or we will have an endless loop
+    @config_pass ||= 0
+    @nodes_config ||= begin
+      nodes_file = ENV['NODES_FILE'] || 'nodes.yml'
+      raise "No file #{nodes_file}" unless File.exist?(nodes_file)
+      @config_pass += 1
+      config = YAML.load(ERB.new(File.read('nodes.yml')).result(binding))
+      @config_pass -= 1
+      config
+    end
+  end
+
+  def all_nodes
+    return [] if @config_pass > 1
+    return nodes_config.keys
   end
 end

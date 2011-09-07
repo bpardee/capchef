@@ -21,9 +21,7 @@ Capistrano::Configuration.instance.load do
     task :default do
       Capchef.prepend_path(chef_solo_path) if exists?(:chef_solo_path)
 
-      raise 'No nodes.yml' unless File.exist?('nodes.yml')
-      config = YAML.load(ERB.new(File.read('nodes.yml')).result(binding))
-
+      config = Capchef.nodes_config
       remote_tmpdir = "/tmp/chef_solo.#$$"
       run "mkdir #{remote_tmpdir}"
       remote_node_file = "#{remote_tmpdir}/node.json"
