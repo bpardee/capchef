@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.authors = ['Brad Pardee']
   s.email = ['bradpardee@gmail.com']
   s.homepage = 'http://github.com/ClarityServices/capchef'
-  s.files = Dir["{lib}/**/*"] #+ %w(LICENSE.txt Rakefile Gemfile History.md README.rdoc)
+  s.files = Dir["{lib}/**/*"] + %w(LICENSE.txt Rakefile README.md)
   s.version = '0.0.2'
   s.add_dependency 'capistrano'
   s.add_dependency 'json'
