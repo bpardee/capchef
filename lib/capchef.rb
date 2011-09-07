@@ -74,7 +74,7 @@ module Capchef
   end
 
   def all_nodes
-    return [] if @config_pass > 1
+    return [] if @config_pass && @config_pass > 1
     return nodes_config.keys
   end
 end
