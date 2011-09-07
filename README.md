@@ -35,7 +35,7 @@ Your Capfile might look something like the following:
     require 'capchef/chef_recipes'
     require 'capchef/utility_recipes'
 
-    role :node, Capchef.all_nodes
+    role :node, *Capchef.all_nodes
 
     # Define the path to the chef-solo executable if it's not in /usr/bin or /usr/local/bin
     set :chef_solo_path, '/opt/ruby/bin'
