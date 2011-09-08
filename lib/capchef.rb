@@ -67,7 +67,7 @@ module Capchef
       nodes_file = ENV['NODES_FILE'] || 'nodes.yml'
       raise "No file #{nodes_file}" unless File.exist?(nodes_file)
       @config_pass += 1
-      config = YAML.load(ERB.new(File.read('nodes.yml')).result(binding))
+      config = YAML.load(ERB.new(File.read(nodes_file)).result(binding))
       @config_pass -= 1
       config
     end
