@@ -35,6 +35,9 @@ Your Capfile might look something like the following:
     require 'capchef/chef_recipes'
     require 'capchef/utility_recipes'
 
+    # Uncomment the following if running scripts under sudo isn't allowed
+    #Capchef.use_sudo = false
+
     role :node, *Capchef.all_nodes
 
     # Define the path to the chef-solo executable if it's not in /usr/bin or /usr/local/bin

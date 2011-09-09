@@ -27,36 +27,51 @@ module Capchef
     @path = "#{dir}:#{path}"
   end
 
-  # Runs +command+ as root invoking the command with su -c
-  # and handling the root password prompt.
+  def use_sudo=(val)
+    @use_sudo = val
+  end
+  
+  def use_sudo?
+    return true  if ENV['CAPCHEF_SUDO'] == 'true'
+    return false if ENV['CAPCHEF_SUDO'] == 'false'
+    # Default to true if unset
+    @use_sudo = true if @use_sudo.nil?
+    return @use_sudo
+  end
+
+  # Runs +command+ as root invoking the command with 'su -c' and handling the root password prompt.
   #
-  #   surun "/etc/init.d/apache reload"
+  #   surun cap, "/etc/init.d/apache reload"
   #   # Executes
   #   # su - -c '/etc/init.d/apache reload'
   #
-  def surun(cap, command, options={})
-    @root_password ||= cap.fetch(:root_password, Capistrano::CLI.password_prompt("root password: "))
-    cap.run("su -c 'cd; PATH=#{path}; #{command}'", options) do |channel, stream, output|
-      puts "[#{channel[:host]}] #{output}" if output
-      channel.send_data("#{@root_password}\n") if output && output =~ /^Password:/
-      yield channel, stream, output if block_given?
+  #   surun cap, 'my_install' do |channel, stream, output|
+  #     channel.send_data("\n") if output && output =~ /to continue/
+  #     channel.send_data("y\n") if output && output =~ /replace/
+  #   end
+  def surun(cap, command, options={}, &block)
+    if use_sudo?
+      if command.kind_of?(Array)
+        my_surun_script(cap, 'surun', command, nil, options, &block)
+      else
+        sucmd = "#{cap.sudo} PATH=#{path} #{command}"
+        cap.run(sucmd, options)
+      end
+    else
+      @root_password ||= cap.fetch(:root_password, Capistrano::CLI.password_prompt("root password: "))
+      command = command.join(';') if command.kind_of?(Array)
+      sucmd = "su -c 'cd; PATH=#{path}; #{command}'"
+      cap.run(sucmd, options) do |channel, stream, output|
+        puts "[#{channel[:host]}] #{output}" if output
+        channel.send_data("#{@root_password}\n") if !use_sudo? && output && output =~ /^Password:/
+        yield channel, stream, output if block_given?
+      end
     end
   end
 
-  def surun_script(cap, script, options={})
+  def surun_script(cap, script, args=nil, options={}, &block)
     raise "No such file: #{script}" unless File.exist?(script)
-    basename = File.basename(script)
-    script_dir = "#{tmpdir}/#{basename}.#$$"
-    remote_script = "#{script_dir}/#{basename}"
-    cap.run "mkdir #{script_dir}", options
-    cap.upload script, remote_script, options
-    cap.run "chmod 0755 #{remote_script}", options
-    if block_given?
-      yield remote_script
-    else
-      surun cap, remote_script, options
-    end
-    cap.run "rm -rf #{script_dir}", options
+    my_surun_script(cap, script, nil, args, options, &block)
   end
 
   def nodes_config
@@ -67,7 +82,7 @@ module Capchef
       nodes_file = ENV['NODES_FILE'] || 'nodes.yml'
       raise "No file #{nodes_file}" unless File.exist?(nodes_file)
       @config_pass += 1
-      config = YAML.load(ERB.new(File.read(nodes_file)).result(binding))
+      config = YAML.load(ERB.new(File.read(nodes_file), nil, '-').result(binding))
       @config_pass -= 1
       config
     end
@@ -76,5 +91,27 @@ module Capchef
   def all_nodes
     return [] if @config_pass && @config_pass > 1
     return nodes_config.keys
+  end
+
+  private
+
+  # Hack way to allow either a script or a list of commands
+  def my_surun_script(cap, script, command_array, args, options, &block)
+    basename = File.basename(script)
+    script_dir = "#{tmpdir}/#{basename}.#$$"
+    remote_script = "#{script_dir}/#{basename}"
+    cap.run "mkdir #{script_dir}", options
+    if command_array
+      commands = command_array.join("\n")
+      script_text = "#!/bin/sh\n#{commands}\n"
+      cap.put script_text, remote_script, options
+    else
+      cap.upload script, remote_script, options
+    end
+    cap.run "chmod 0755 #{remote_script}", options
+    cmd = remote_script
+    cmd += ' ' + args if args
+    surun cap, cmd, options, &block
+    cap.run "rm -rf #{script_dir}", options
   end
 end

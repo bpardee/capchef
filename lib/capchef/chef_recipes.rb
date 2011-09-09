@@ -60,7 +60,7 @@ Capistrano::Configuration.instance.load do
             Find.find('roles') do |role_file|
               # TODO: This does not work (how do I specify a role in JSON?
               if role_file.match(/\.yml$/)
-                data = YAML.load(ERB.new(File.read(role_file)).result(binding)).to_json
+                data = YAML.load(ERB.new(File.read(role_file), nil, '-').result(binding)).to_json
                 new_role_file = role_file.sub(/\.yml$/, '.json')
                 tar.add_file_simple(new_role_file, :size=>data.size, :mode=>0644, :mtime=>File.mtime(role_file)) { |f| f.write(data) }
               else
@@ -71,7 +71,14 @@ Capistrano::Configuration.instance.load do
           gzip.close
           put sio_roles_tgz.string, remote_roles_tgz, :hosts => valid_hosts
         end
-        Capchef.surun(self, "mkdir -p /etc/chef; cd /etc/chef; rm -rf cookbooks roles; tar zxf #{remote_cookbooks_tgz}; tar zxf #{remote_roles_tgz}; chef-solo -c #{remote_solo_file} -j #{remote_node_file}", :hosts => valid_hosts)
+        Capchef.surun(self, [
+            'mkdir -p /etc/chef',
+            'cd /etc/chef',
+            'rm -rf cookbooks roles',
+            "tar zxf #{remote_cookbooks_tgz}",
+            "tar zxf #{remote_roles_tgz}",
+            "chef-solo -c #{remote_solo_file} -j #{remote_node_file}"
+        ], :hosts => valid_hosts)
       ensure
         tmp_cookbooks_tgz.unlink
         run "rm -rf #{remote_tmpdir}"
