@@ -1,0 +1,56 @@
+require 'capchef'
+require 'capchef/chef_recipes'
+require 'capchef/utility_recipes'
+
+#Capchef.use_sudo = false
+
+role :node, *Capchef.all_nodes
+
+set :chef_solo_path, '/opt/ruby/bin'
+
+namespace :bootstrap do
+  desc <<-DESC
+    Bootstraps your machine by installing ruby and other dependant packages.
+  DESC
+  task :default do
+    install_packages
+    install_ruby
+  end
+  
+  desc "Install necessary packages (ruby prereqs, etc.). optional arg HOSTS=ip1,ip2"
+  task :install_packages do
+    # Friggin exit statuses make verifying success too difficult
+    Capchef.surun self, "rpm --nodeps --force -i http://download.fedora.redhat.com/pub/epel/5/x86_64/git-1.7.4.1-1.el5.x86_64.rpm && true"
+    Capchef.surun self, "yum -y install zlib-devel openssl-devel ncurses-devel && true"
+    Capchef.surun self, "yum -y remove httpd && true"
+  end
+
+  desc "Install ruby as chef depends on native extensions.  optional arg HOSTS=ip1,ip2"
+  task :install_ruby do
+    Capchef.surun_script self, File.expand_path('../ruby_install', __FILE__)
+  end
+end
+
+namespace :account do
+  desc "Change the password for all your accounts.  optional args user=<user> HOSTS=ip1,ip2"
+  task :passwd do
+    old_password = fetch(:password,     Capistrano::CLI.password_prompt("(current) UNIX password: ")) unless ENV['user']
+    new_password = fetch(:new_password, Capistrano::CLI.password_prompt("New UNIX password: "))
+    cfm_password = fetch(:cfm_password, Capistrano::CLI.password_prompt("Retype new UNIX password: "))
+    raise 'Password does not match' unless new_password == cfm_password
+    if ENV['user']
+      Capchef.surun self,  "passwd #{ENV['user']}" do |channel, stream, output|
+        puts "[#{channel[:host]}] #{output}" if output
+        channel.send_data("#{new_password}\n") if output && output =~ /^New UNIX password:/
+        channel.send_data("#{cfm_password}\n") if output && output =~ /^Retype new UNIX password:/
+      end
+    else
+      run 'passwd' do |channel, stream, output|
+        puts "[#{channel[:host]}] #{output}" if output
+        channel.send_data("#{old_password}\n") if output && output =~ /^\(current\) UNIX password:/
+        channel.send_data("#{new_password}\n") if output && output =~ /^New UNIX password:/
+        channel.send_data("#{cfm_password}\n") if output && output =~ /^Retype new UNIX password:/
+      end
+    end
+  end
+end
