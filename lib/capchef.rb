@@ -39,6 +39,14 @@ module Capchef
     return @use_sudo
   end
 
+  def sudo_options
+    @sudo_options ||= ''
+  end
+
+  def sudo_options=(val)
+    @sudo_options = val
+  end
+
   # Runs +command+ as root invoking the command with 'su -c' and handling the root password prompt.
   #
   #   surun cap, "/etc/init.d/apache reload"
@@ -54,7 +62,7 @@ module Capchef
       if command.kind_of?(Array)
         my_surun_script(cap, 'surun', command, nil, options, &block)
       else
-        sucmd = "#{cap.sudo} PATH=#{path} #{command}"
+        sucmd = "#{cap.sudo} #{sudo_options} PATH=#{path} #{command}"
         cap.run(sucmd, options)
       end
     else
