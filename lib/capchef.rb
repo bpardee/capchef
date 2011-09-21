@@ -120,6 +120,7 @@ module Capchef
     cmd = remote_script
     cmd += ' ' + args if args
     surun cap, cmd, options, &block
-    cap.run "rm -rf #{script_dir}", options
+  ensure
+    cap.run "rm -rf #{script_dir}", options unless ENV['CAPCHEF_KEEP_TEMP']
   end
 end

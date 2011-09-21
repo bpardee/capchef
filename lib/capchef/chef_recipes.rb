@@ -44,7 +44,7 @@ Capistrano::Configuration.instance.load do
         exit 1
       end
 
-      solo_rb = "file_cache_path '/etc/chef'\ncookbook_path '/etc/chef/cookbooks'\nrole_path '/etc/chef/roles'\n"
+      solo_rb = "file_cache_path '/etc/chef'\ncookbook_path '/etc/chef/cookbooks'\nrole_path '/etc/chef/roles'\nhttp_proxy ENV['http_proxy'] if ENV['http_proxy']\n"
       put solo_rb, remote_solo_file, :hosts => valid_hosts
       begin
         tmp_cookbooks_tgz = Tempfile.new('cookbooks')
@@ -81,7 +81,7 @@ Capistrano::Configuration.instance.load do
         ], :hosts => valid_hosts)
       ensure
         tmp_cookbooks_tgz.unlink
-        run "rm -rf #{remote_tmpdir}"
+        run "rm -rf #{remote_tmpdir}" unless ENV['CAPCHEF_KEEP_TEMP']
       end
     end
   end
