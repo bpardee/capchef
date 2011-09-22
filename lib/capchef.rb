@@ -63,7 +63,7 @@ module Capchef
         my_surun_script(cap, 'surun', command, nil, options, &block)
       else
         sucmd = "#{cap.sudo} #{sudo_options} PATH=#{path} #{command}"
-        cap.run(sucmd, options)
+        cap.run(sucmd, options, &block)
       end
     else
       @root_password ||= cap.fetch(:root_password, Capistrano::CLI.password_prompt("root password: "))
@@ -71,7 +71,7 @@ module Capchef
       sucmd = "su -c 'cd; PATH=#{path}; #{command}'"
       cap.run(sucmd, options) do |channel, stream, output|
         puts "[#{channel[:host]}] #{output}" if output
-        channel.send_data("#{@root_password}\n") if !use_sudo? && output && output =~ /^Password:/
+        channel.send_data("#{@root_password}\n") if output && output =~ /^Password:/
         yield channel, stream, output if block_given?
       end
     end
