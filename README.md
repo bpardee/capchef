@@ -68,6 +68,11 @@ Then you can install to your hosts with the following command:
 
     cap chef
 
+## To Do
+
+Currently all recipes get rerun whenever you perform a 'cap chef'.  I could probably get around this with an option to
+tar to maintain modification times when extracting the cookbook files.
+
 ## Author
 
 Brad Pardee :: bradpardee@gmail.com
