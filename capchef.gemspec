@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
   s.authors = ['Brad Pardee']
   s.email = ['bradpardee@gmail.com']
   s.homepage = 'http://github.com/ClarityServices/capchef'
-  s.files = Dir["{lib}/**/*"] + %w(LICENSE.txt Rakefile README.md)
-  s.version = '0.0.7'
+  s.files = Dir["{lib}/**/*"] + %w(LICENSE.txt Rakefile README.md History.md)
+  s.version = '0.0.8'
   s.add_dependency 'capistrano'
   s.add_dependency 'json'
   s.add_dependency 'minitar'

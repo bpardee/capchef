@@ -50,7 +50,10 @@ Capistrano::Configuration.instance.load do
           exit 1
         end
 
-        solo_rb = "file_cache_path '/etc/chef'\ncookbook_path '/etc/chef/cookbooks'\nrole_path '/etc/chef/roles'\nhttp_proxy ENV['http_proxy'] if ENV['http_proxy']\n"
+        solo_rb = "file_cache_path '/etc/chef'\ncookbook_path '/etc/chef/cookbooks'\nrole_path '/etc/chef/roles'\n"
+        ['http_proxy', 'https_proxy', 'http_proxy_user', 'http_proxy_pass'].each do |env_name|
+          solo_rb << "#{env_name} ENV['#{env_name}'] if ENV['#{env_name}']\n"
+        end
         put solo_rb, remote_solo_file, :hosts => valid_hosts
         begin
           tmp_cookbooks_tgz = Tempfile.new('cookbooks')
