@@ -38,7 +38,7 @@ Your Capfile might look something like the following:
     # Uncomment the following if running scripts under sudo isn't allowed
     #Capchef.use_sudo = false
 
-    role :node, *Capchef.all_nodes
+    role :node, *Capchef.all_nodes(ENV['NODE_FILTER'])
 
     # Define the path to the chef-solo executable if it's not in /usr/bin or /usr/local/bin
     set :chef_solo_path, '/opt/ruby/bin'
@@ -67,6 +67,10 @@ Your nodes.yml might look something like the following:
 Then you can install to your hosts with the following command:
 
     cap chef
+
+Or just to your web servers with a command like (filters by regex matching the node names):
+
+    NODE_FILTER=web cap chef
 
 ## To Do
 

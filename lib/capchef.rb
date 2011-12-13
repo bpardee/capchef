@@ -96,8 +96,9 @@ module Capchef
     end
   end
 
-  def all_nodes
+  def all_nodes(filter=nil)
     return [] if @config_pass && @config_pass > 1
+    return nodes_config.keys.grep(Regexp.new(filter)) if filter
     return nodes_config.keys
   end
 

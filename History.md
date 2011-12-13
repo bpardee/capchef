@@ -1,6 +1,11 @@
 capchef Changelog
 =====================
 
+0.0.9
+-----
+
+ - Allow optional filter on all_nodes call.
+
 0.0.8
 -----
 
