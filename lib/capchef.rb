@@ -98,8 +98,10 @@ module Capchef
 
   def all_nodes(filter=nil)
     return [] if @config_pass && @config_pass > 1
-    return nodes_config.keys.grep(Regexp.new(filter)) if filter
-    return nodes_config.keys
+    # Select only those nodes with an actual run_list, assume the others are just setting up vars
+    nodes = nodes_config.keys.select { |node| nodes_config[node]['run_list'] }
+    nodes = nodes.grep(Regexp.new(filter)) if filter
+    return nodes
   end
 
   private

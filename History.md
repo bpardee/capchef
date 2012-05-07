@@ -1,6 +1,12 @@
 capchef Changelog
 =====================
 
+0.0.10
+-----
+
+ - Ignore nodes that don't have a run_list (useful for setting default variables in a nodes.yml,
+   although there probably is a better way I could be doing this.
+
 0.0.9
 -----
 
